@@ -77,7 +77,48 @@ function genId() {
   return ++_nextId;
 }
 
-export default function CsvTable({ apiPath, columns, canAddRow = true }) {
+function LinkCell({ href }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  return (
+    <div className="flex gap-1">
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 px-2 text-xs"
+        onClick={handleCopy}
+        disabled={!href}
+      >
+        {copied ? "Copied!" : "Copy"}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 px-2 text-xs"
+        disabled={!href}
+        asChild
+      >
+        <a href={href} target="_blank" rel="noopener noreferrer">
+          Open
+        </a>
+      </Button>
+    </div>
+  );
+}
+
+export default function CsvTable({
+  apiPath,
+  columns,
+  canAddRow = true,
+  canDelete = true,
+  rowClassName,
+}) {
   const [rows, setRows] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -149,19 +190,19 @@ export default function CsvTable({ apiPath, columns, canAddRow = true }) {
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap"
+                  className="px-3 py-2 text-center font-medium text-muted-foreground whitespace-nowrap border-r last:border-r-0"
                 >
                   {col.label}
                 </th>
               ))}
-              <th className="w-8 px-2" />
+              {canDelete && <th className="w-8 px-2" />}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + 1}
+                  colSpan={columns.length + (canDelete ? 1 : 0)}
                   className="px-3 py-8 text-center text-muted-foreground text-sm"
                 >
                   No rows yet.{canAddRow && " Click Add Row to get started."}
@@ -171,11 +212,15 @@ export default function CsvTable({ apiPath, columns, canAddRow = true }) {
               rows.map((row, rowIdx) => (
                 <tr
                   key={row._id}
-                  className="border-b last:border-0 hover:bg-muted/25"
+                  className={`border-b last:border-0 ${
+                    rowClassName ? rowClassName(row) : "hover:bg-muted/25"
+                  }`}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-2 py-1.5">
-                      {!col.editable ? (
+                    <td key={col.key} className="px-2 py-1.5 border-r last:border-r-0">
+                      {col.type === "link" ? (
+                        <LinkCell href={row[col.key]} />
+                      ) : !col.editable ? (
                         <span className="px-1 text-sm">{row[col.key]}</span>
                       ) : col.type === "select" ? (
                         <Select
@@ -206,15 +251,17 @@ export default function CsvTable({ apiPath, columns, canAddRow = true }) {
                       )}
                     </td>
                   ))}
-                  <td className="px-2 py-1.5 text-center">
-                    <button
-                      onClick={() => handleDeleteRow(rowIdx)}
-                      className="opacity-40 hover:opacity-100 transition-opacity"
-                      aria-label="Delete row"
-                    >
-                      <img src="/delete.svg" alt="delete" className="w-4 h-4" />
-                    </button>
-                  </td>
+                  {canDelete && (
+                    <td className="px-2 py-1.5 text-center">
+                      <button
+                        onClick={() => handleDeleteRow(rowIdx)}
+                        className="opacity-40 hover:opacity-100 transition-opacity"
+                        aria-label="Delete row"
+                      >
+                        <img src="/delete.svg" alt="delete" className="w-4 h-4" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

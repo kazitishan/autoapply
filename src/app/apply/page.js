@@ -8,7 +8,7 @@ const COLUMNS = [
 
 export default function ApplyPage() {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-4">
+    <div className="px-6 py-8 space-y-4">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Apply</h1>
         <p className="text-muted-foreground mt-1">
