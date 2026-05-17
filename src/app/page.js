@@ -72,6 +72,13 @@ const OPTIONS = {
     "4 - Full Professional",
     "5 - Fluent",
   ],
+  proficiency: [
+    "1 - Elementary",
+    "2 - Limited Working",
+    "3 - Professional Working",
+    "4 - Full Professional",
+    "5 - Native or Bilingual",
+  ],
 };
 
 function withIds(arr) {
@@ -84,16 +91,39 @@ function stripIds(arr) {
 
 // ── Reusable field components ──────────────────────────────────────────────
 
-function Field({ label, id, value, onChange, placeholder }) {
+function Field({ label, id, value, onChange, placeholder, onlyNumbers }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
       <Input
         id={id}
         value={value ?? ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          const v = onlyNumbers ? e.target.value.replace(/\D/g, "") : e.target.value;
+          onChange(v);
+        }}
         placeholder={placeholder}
+        inputMode={onlyNumbers ? "numeric" : undefined}
       />
+    </div>
+  );
+}
+
+function PrefixField({ label, id, value, onChange, placeholder }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex h-10 w-full rounded-md border border-input bg-background text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        <span className="flex items-center pl-3 pr-1 text-muted-foreground select-none">+</span>
+        <input
+          id={id}
+          className="flex-1 bg-transparent py-2 pr-3 outline-none placeholder:text-muted-foreground"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
+          placeholder={placeholder}
+          inputMode="numeric"
+        />
+      </div>
     </div>
   );
 }
@@ -524,12 +554,12 @@ export default function Home() {
                   onChange={(v) => setContact("email", v)}
                 />
                 <div className="grid grid-cols-3 gap-2">
-                  <Field
+                  <PrefixField
                     label="Country Code"
                     id="country-code"
                     value={contact["country code"]}
                     onChange={(v) => setContact("country code", v)}
-                    placeholder="+1"
+                    placeholder="1"
                   />
                   <div className="col-span-2">
                     <Field
@@ -537,6 +567,7 @@ export default function Home() {
                       id="phone"
                       value={contact.phone}
                       onChange={(v) => setContact("phone", v)}
+                      onlyNumbers
                     />
                   </div>
                 </div>
@@ -597,6 +628,7 @@ export default function Home() {
                   id="zip"
                   value={address["zip code"]}
                   onChange={(v) => setAddress("zip code", v)}
+                  onlyNumbers
                 />
                 <div className="col-span-2">
                   <Field
@@ -669,6 +701,7 @@ export default function Home() {
                           id={`school-start-year-${i}`}
                           value={school["start year"]}
                           onChange={(v) => setSchool(i, "start year", v)}
+                          onlyNumbers
                         />
                         <SelectField
                           label="Graduation Month"
@@ -682,6 +715,7 @@ export default function Home() {
                           id={`grad-year-${i}`}
                           value={school["graduation year"]}
                           onChange={(v) => setSchool(i, "graduation year", v)}
+                          onlyNumbers
                         />
                       </div>
                     </SortableItem>
@@ -757,6 +791,7 @@ export default function Home() {
                             id={`exp-start-year-${i}`}
                             value={exp["start year"]}
                             onChange={(v) => setExp(i, "start year", v)}
+                            onlyNumbers
                           />
                           {!exp["current job"] && (
                             <>
@@ -772,6 +807,7 @@ export default function Home() {
                                 id={`exp-end-year-${i}`}
                                 value={exp["end year"] ?? ""}
                                 onChange={(v) => setExp(i, "end year", v || null)}
+                                onlyNumbers
                               />
                             </>
                           )}
@@ -836,11 +872,12 @@ export default function Home() {
                             onCheckedChange={(v) => setLang(i, "fluent", v)}
                           />
                         </div>
-                        <Field
+                        <SelectField
                           label="Proficiency"
                           id={`proficiency-${i}`}
                           value={lang.proficiency}
                           onChange={(v) => setLang(i, "proficiency", v)}
+                          options={OPTIONS.proficiency}
                         />
                         <SelectField
                           label="Reading / Speaking / Writing"
