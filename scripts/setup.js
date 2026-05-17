@@ -3,8 +3,10 @@ const path = require("path");
 
 const dataDir = path.join(__dirname, "..", "private", "data");
 const infoPath = path.join(dataDir, "info.json");
+const applyPath = path.join(dataDir, "apply.csv");
+const appliedPath = path.join(dataDir, "applied.csv");
 
-if (fs.existsSync(infoPath)) process.exit(0);
+if (fs.existsSync(infoPath) && fs.existsSync(applyPath) && fs.existsSync(appliedPath)) process.exit(0);
 
 const skeleton = {
   "personal info": {
@@ -82,5 +84,18 @@ const skeleton = {
 };
 
 fs.mkdirSync(dataDir, { recursive: true });
-fs.writeFileSync(infoPath, JSON.stringify(skeleton, null, 4), "utf-8");
-console.log("Created private/data/info.json");
+
+if (!fs.existsSync(infoPath)) {
+  fs.writeFileSync(infoPath, JSON.stringify(skeleton, null, 4), "utf-8");
+  console.log("Created private/data/info.json");
+}
+
+if (!fs.existsSync(applyPath)) {
+  fs.writeFileSync(applyPath, "Link,Notes\n", "utf-8");
+  console.log("Created private/data/apply.csv");
+}
+
+if (!fs.existsSync(appliedPath)) {
+  fs.writeFileSync(appliedPath, "Time & Date,Company,Position,Status,Link,Notes\n", "utf-8");
+  console.log("Created private/data/applied.csv");
+}
