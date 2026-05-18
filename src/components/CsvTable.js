@@ -118,6 +118,7 @@ export default function CsvTable({
   canAddRow = true,
   canDelete = true,
   rowClassName,
+  rowActions,
 }) {
   const [rows, setRows] = useState([]);
   const [headers, setHeaders] = useState([]);
@@ -195,6 +196,7 @@ export default function CsvTable({
                   {col.label}
                 </th>
               ))}
+              {rowActions && <th className="px-2" />}
               {canDelete && <th className="w-8 px-2" />}
             </tr>
           </thead>
@@ -202,7 +204,7 @@ export default function CsvTable({
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (canDelete ? 1 : 0)}
+                  colSpan={columns.length + (rowActions ? 1 : 0) + (canDelete ? 1 : 0)}
                   className="px-3 py-8 text-center text-muted-foreground text-sm"
                 >
                   No rows yet.{canAddRow && " Click Add Row to get started."}
@@ -251,6 +253,19 @@ export default function CsvTable({
                       )}
                     </td>
                   ))}
+                  {rowActions && (
+                    <td className="px-2 py-1.5 text-center whitespace-nowrap">
+                      {rowActions.map((action, i) => (
+                        <button
+                          key={i}
+                          onClick={() => action.onClick(row)}
+                          className="text-xs px-2 py-1 rounded border border-input hover:bg-muted transition-colors"
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </td>
+                  )}
                   {canDelete && (
                     <td className="px-2 py-1.5 text-center">
                       <button
