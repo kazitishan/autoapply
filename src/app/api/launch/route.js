@@ -34,6 +34,7 @@ async function askModel(page, message) {
   await copyBtn.click();
   const codeText = await page.evaluate(() => navigator.clipboard.readText());
   console.log(codeText);
+  return codeText;
 }
 
 // Construct the message to send to the model
@@ -43,7 +44,8 @@ function constructMessage(link, accessTree) {
     I am using Playwright to apply to it and I need your help in deciding what my next actions should be to completing this job application. Tell me what buttons I need to press to move on and the information I need to input.\n
     Give me the javascript playwright code only!\n
     Don't give me any explanations or comments, just the code.\n
-    Don't give any actions for buttons or inputs that are not in the acessibility tree that I sent you. If you want to do an action, make sure it's in the accessibility tree.\n
+    Don't give any actions for buttons or inputs that are not in the acessibility tree that I sent you. If you want to do an action like clicking a button, make sure it's in the accessibility tree first.\n
+    I want you to give me the code in a copyable format, so I can just copy and paste it and run it. So make sure the code is correct and doesn't have any syntax errors.\n
     If the job application asks whether I would like to autofill with resume or apply manually, always choose apply manually.\n
     Job: ${link}\n
     Info structure (values are placeholders — fill them from the actual user data at runtime. The variable that stores the user information is called info):\n${JSON.stringify(cleanInfo(info))}
@@ -102,7 +104,9 @@ export async function POST() {
   await constructAccessTree(jobPage);
   const accessTree = await constructAccessTree(jobPage);
 
-  await askModel(geminiPage, constructMessage(links[0], accessTree));
+  const code = await askModel(geminiPage, constructMessage(links[0], accessTree));
+  const runCode = new Function('page', `return (async () => { ${code} })()`);
+  await runCode(jobPage);
 
   return Response.json({ ok: true });
 }
