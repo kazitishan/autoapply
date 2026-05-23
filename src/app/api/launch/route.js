@@ -22,11 +22,16 @@ async function askModel(page, message) {
   await page.keyboard.press("Enter");
   await page.waitForSelector('button[aria-label="Send message"]');
 
-  // await page.keyboard.type("Hi");
-  // await page.keyboard.press("Enter");
-  // await page.waitForSelector('button[aria-label="Send message"]');
+  const copyBtn = page.getByRole('button', { name: 'Copy code' });
+  const appeared = await copyBtn.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false);
+  if (!appeared) {
+    await page.keyboard.type("Hi");
+    await page.keyboard.press("Enter");
+    await page.waitForSelector('button[aria-label="Send message"]');
+    await copyBtn.waitFor({ state: 'visible' });
+  }
 
-  await page.getByRole('button', { name: 'Copy code' }).click();
+  await copyBtn.click();
   const codeText = await page.evaluate(() => navigator.clipboard.readText());
   console.log(codeText);
 }
