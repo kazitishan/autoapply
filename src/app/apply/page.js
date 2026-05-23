@@ -21,7 +21,7 @@ export default function ApplyPage() {
           Auto Apply
         </button>
       </div>
-      <CsvTable apiPath="/api/apply" columns={COLUMNS} />
+      <CsvTable apiPath="/api/apply" columns={COLUMNS} reorderable />
     </div>
   );
 }

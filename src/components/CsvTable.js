@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -72,9 +72,8 @@ function serializeCsv(headers, rows) {
   ].join("\n");
 }
 
-let _nextId = 0;
 function genId() {
-  return ++_nextId;
+  return crypto.randomUUID();
 }
 
 function LinkCell({ href }) {
@@ -119,10 +118,13 @@ export default function CsvTable({
   canDelete = true,
   rowClassName,
   rowActions,
+  reorderable = false,
 }) {
   const [rows, setRows] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const dragIdx = useRef(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
 
   useEffect(() => {
     fetch(apiPath)
@@ -179,6 +181,33 @@ export default function CsvTable({
     save(newRows);
   }
 
+  function handleDragStart(idx) {
+    dragIdx.current = idx;
+  }
+
+  function handleDragOver(e, idx) {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  }
+
+  function handleDrop(e, idx) {
+    e.preventDefault();
+    setDragOverIdx(null);
+    const from = dragIdx.current;
+    if (from === null || from === idx) return;
+    const newRows = [...rows];
+    const [moved] = newRows.splice(from, 1);
+    newRows.splice(idx, 0, moved);
+    setRows(newRows);
+    save(newRows);
+    dragIdx.current = null;
+  }
+
+  function handleDragEnd() {
+    setDragOverIdx(null);
+    dragIdx.current = null;
+  }
+
   if (loading)
     return <p className="text-sm text-muted-foreground">Loading...</p>;
 
@@ -188,6 +217,7 @@ export default function CsvTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
+              {reorderable && <th className="w-6 px-2" />}
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -204,7 +234,7 @@ export default function CsvTable({
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (rowActions ? 1 : 0) + (canDelete ? 1 : 0)}
+                  colSpan={columns.length + (reorderable ? 1 : 0) + (rowActions ? 1 : 0) + (canDelete ? 1 : 0)}
                   className="px-3 py-8 text-center text-muted-foreground text-sm"
                 >
                   No rows yet.{canAddRow && " Click Add Row to get started."}
@@ -214,10 +244,22 @@ export default function CsvTable({
               rows.map((row, rowIdx) => (
                 <tr
                   key={row._id}
+                  draggable={reorderable}
+                  onDragStart={reorderable ? () => handleDragStart(rowIdx) : undefined}
+                  onDragOver={reorderable ? (e) => handleDragOver(e, rowIdx) : undefined}
+                  onDrop={reorderable ? (e) => handleDrop(e, rowIdx) : undefined}
+                  onDragEnd={reorderable ? handleDragEnd : undefined}
                   className={`border-b last:border-0 ${
+                    dragOverIdx === rowIdx ? "border-t-2 border-t-primary" : ""
+                  } ${reorderable ? "cursor-grab" : ""} ${
                     rowClassName ? rowClassName(row) : "hover:bg-muted/25"
                   }`}
                 >
+                  {reorderable && (
+                    <td className="px-2 py-1.5 text-center text-muted-foreground select-none">
+                      ⠿
+                    </td>
+                  )}
                   {columns.map((col) => (
                     <td key={col.key} className="px-2 py-1.5 border-r last:border-r-0">
                       {col.type === "link" ? (
